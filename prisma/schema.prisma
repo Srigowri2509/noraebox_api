@@ -7,6 +7,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum BookingStatus {
+  pending
+  confirmed
+  cancelled
+}
+
 model User {
   id        String    @id @default(uuid())
   email     String    @unique
@@ -22,7 +28,7 @@ model Booking {
   roomId    String
   date      DateTime
   timeSlot  String
-  status    String
+  status    BookingStatus @default(pending)
   createdAt DateTime @default(now())
 
   @@unique([roomId, date, timeSlot])

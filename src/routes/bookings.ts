@@ -1,24 +1,29 @@
-import { Prisma } from "@prisma/client";
+import { BookingStatus, Prisma } from "@prisma/client";
 import { Router } from "express";
 import { prisma } from "../db";
+import { normalizeBookingDateUtc } from "../lib/bookingDate";
+import { assertBookingOwnedBy, ForbiddenError } from "../lib/bookingOwnership";
 import { requireAuth } from "../middleware/requireAuth";
+import { bookingIdParamSchema } from "../validation/bookingParams";
+import { createBookingBodySchema } from "../validation/bookingSchemas";
 
 const router = Router();
 
 router.post("/", requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
-    const roomId = String(req.body?.roomId ?? "").trim();
-    const dateRaw = req.body?.date;
-    const timeSlot = String(req.body?.timeSlot ?? "").trim();
-
-    if (!roomId || dateRaw == null || dateRaw === "" || !timeSlot) {
-      res.status(400).json({ error: "roomId, date, and timeSlot are required" });
+    const parsed = createBookingBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        error: "Validation failed",
+        details: parsed.error.flatten(),
+      });
       return;
     }
 
-    const date =
-      typeof dateRaw === "string" ? new Date(dateRaw) : new Date(String(dateRaw));
+    const { roomId, date: dateInput, timeSlot } = parsed.data;
+    const userId = req.user!.id;
+
+    const date = normalizeBookingDateUtc(dateInput);
     if (Number.isNaN(date.getTime())) {
       res.status(400).json({ error: "Invalid date" });
       return;
@@ -39,7 +44,7 @@ router.post("/", requireAuth, async (req, res) => {
         roomId,
         date,
         timeSlot,
-        status: "pending",
+        status: BookingStatus.pending,
       },
     });
 
@@ -63,6 +68,38 @@ router.get("/me", requireAuth, async (req, res) => {
     });
     res.json(bookings);
   } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.delete("/:id", requireAuth, async (req, res) => {
+  try {
+    const params = bookingIdParamSchema.safeParse(req.params);
+    if (!params.success) {
+      res.status(400).json({
+        error: "Validation failed",
+        details: params.error.flatten(),
+      });
+      return;
+    }
+
+    const { id } = params.data;
+    const booking = await prisma.booking.findUnique({ where: { id } });
+    if (!booking) {
+      res.status(404).json({ error: "Booking not found" });
+      return;
+    }
+
+    assertBookingOwnedBy(booking, req.user!.id);
+
+    await prisma.booking.delete({ where: { id } });
+    res.status(204).send();
+  } catch (e) {
+    if (e instanceof ForbiddenError) {
+      res.status(e.statusCode).json({ error: e.message });
+      return;
+    }
     console.error(e);
     res.status(500).json({ error: "Server error" });
   }
