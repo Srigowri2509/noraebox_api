@@ -6,9 +6,9 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "nodemon --watch src --ext ts --exec ts-node src/index.ts",
-    "build": "tsc",
+    "build": "tsc && prisma migrate deploy",
     "postinstall": "prisma generate",
-    "start": "prisma migrate deploy && node dist/index.js",
+    "start": "node dist/index.js",
     "migrate": "prisma migrate deploy",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev"
