@@ -3,11 +3,11 @@ import cors from "cors";
 import dotenv from "dotenv";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "./db";
+import bookingsRouter from "./routes/bookings";
 
 dotenv.config();
 
-const prisma = new PrismaClient();
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || "dev-only-change-me";
@@ -89,6 +89,8 @@ app.post("/auth/login", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
+app.use("/bookings", bookingsRouter);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

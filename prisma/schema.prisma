@@ -23,4 +23,7 @@ model Booking {
   date      DateTime
   timeSlot  String
   status    String
+  createdAt DateTime @default(now())
+
+  @@unique([roomId, date, timeSlot])
 }
