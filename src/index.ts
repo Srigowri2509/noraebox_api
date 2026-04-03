@@ -90,6 +90,10 @@ app.post("/auth/login", async (req, res) => {
 
 app.use("/bookings", bookingsRouter);
 
+app.use((req, res) => {
+  res.status(404).json({ error: "Not found", method: req.method, path: req.path });
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
