@@ -19,6 +19,14 @@ app.use(
 );
 app.use(express.json());
 
+app.get("/", (_req, res) => {
+  res.json({
+    name: "Noraebox API",
+    ok: true,
+    docs: "This is the JSON API. Open GET /health for a plain text ping.",
+  });
+});
+
 app.get("/health", (_req, res) => {
   res.type("text").send("API is running");
 });
