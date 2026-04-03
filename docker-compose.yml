@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: norae
+      POSTGRES_PASSWORD: norae
+      POSTGRES_DB: norae
+    ports:
+      - "5432:5432"
+    volumes:
+      - norae_pg_data:/var/lib/postgresql/data
+
+volumes:
+  norae_pg_data:
