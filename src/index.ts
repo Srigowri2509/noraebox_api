@@ -11,12 +11,10 @@ dotenv.config();
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || "dev-only-change-me";
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
-
+// Allow any origin for now (Bearer auth, no cookies). Tighten with FRONTEND_ORIGIN later.
 app.use(
   cors({
-    origin: FRONTEND_ORIGIN,
-    credentials: true,
+    origin: "*",
   })
 );
 app.use(express.json());
